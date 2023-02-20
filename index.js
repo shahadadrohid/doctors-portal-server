@@ -143,6 +143,10 @@ async function run() {
                 return res.status(403).send({ message: 'Forbidden access' })
             }
         })
+        app.get('/doctor', async (req, res) => {
+            const result = await doctorsCollection.find().toArray();
+            res.send(result);
+        })
         app.post('/doctor', verifyJWT, verifyAdmin, async (req, res) => {
             const doctor = req.body;
             console.log(doctor)
