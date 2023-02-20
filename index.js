@@ -143,7 +143,7 @@ async function run() {
                 return res.status(403).send({ message: 'Forbidden access' })
             }
         })
-        app.get('/doctor', async (req, res) => {
+        app.get('/doctor', verifyJWT, verifyAdmin, async (req, res) => {
             const result = await doctorsCollection.find().toArray();
             res.send(result);
         })
@@ -151,6 +151,12 @@ async function run() {
             const doctor = req.body;
             console.log(doctor)
             const result = await doctorsCollection.insertOne(doctor);
+            res.send(result);
+        })
+        app.delete('/doctor/:email', verifyJWT, verifyAdmin, async (req, res) => {
+            const email = req.params.email;
+            const filter = {email: email};
+            const result = await doctorsCollection.deleteOne(filter);
             res.send(result);
         })
     }
