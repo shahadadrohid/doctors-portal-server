@@ -2,7 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
 require('dotenv').config();
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -71,10 +71,12 @@ async function run() {
             const token = jwt.sign({ email: email }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' })
             res.send({ result, token });
         })
+
         app.get('/user', verifyJWT, async (req, res) => {
             const users = await userCollection.find().toArray();
             res.send(users)
         })
+
         app.get('/admin/:email', async (req, res) => {
             const email = req.params.email;
             const user = await userCollection.findOne({ email: email });
@@ -92,12 +94,14 @@ async function run() {
             const result = await userCollection.updateOne(filter, updateDoc);
             res.send(result);
         })
+
         app.get('/service', async (req, res) => {
             const query = {};
             const cursor = servicesCollection.find(query).project({ name: 1 });
             const services = await cursor.toArray();
             res.send(services);
         })
+
         app.get('/available', async (req, res) => {
             const date = req.query.date || 'Feb 7, 2023';
 
@@ -117,6 +121,7 @@ async function run() {
 
             res.send(services)
         })
+
         app.post('/booking', async (req, res) => {
             const booking = req.body;
             const query = { treatment: booking.treatment, date: booking.date, patient: booking.patient }
@@ -129,6 +134,7 @@ async function run() {
                 res.send({ success: true, result });
             }
         })
+
         app.get('/booking', verifyJWT, async (req, res) => {
             const patient = req.query.patient;
             const decodedEmail = req.decoded.email;
@@ -143,19 +149,29 @@ async function run() {
                 return res.status(403).send({ message: 'Forbidden access' })
             }
         })
+
+        app.get('/booking/:id', verifyJWT, async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const booking = await bookingCollection.findOne(query).toArray();
+            res.send(booking)
+        })
+
         app.get('/doctor', verifyJWT, verifyAdmin, async (req, res) => {
             const result = await doctorsCollection.find().toArray();
             res.send(result);
         })
+
         app.post('/doctor', verifyJWT, verifyAdmin, async (req, res) => {
             const doctor = req.body;
-            console.log(doctor)
+            // console.log(doctor)
             const result = await doctorsCollection.insertOne(doctor);
             res.send(result);
         })
+
         app.delete('/doctor/:email', verifyJWT, verifyAdmin, async (req, res) => {
             const email = req.params.email;
-            const filter = {email: email};
+            const filter = { email: email };
             const result = await doctorsCollection.deleteOne(filter);
             res.send(result);
         })
